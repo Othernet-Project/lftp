@@ -1,0 +1,2 @@
+recursive-include librarian_ondd *
+recursive-exclude tests *
