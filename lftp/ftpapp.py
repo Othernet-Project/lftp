@@ -13,6 +13,7 @@ from confloader import get_config_path, ConfDict
 from pyftpdlib.authorizers import DummyAuthorizer
 
 from .utils.logs import configure_logger
+from .ftp.filesystem import prepare_filesystem_class
 
 
 class FTPApplication(object):
@@ -40,10 +41,15 @@ class FTPApplication(object):
         configure_logger(self.config)
 
     def setup_ftp_server(self):
-        authorizer = DummyAuthorizer()
-        authorizer.add_anonymous(self.config['ftp.content_path'])
         handler = FTPHandler
+        authorizer = DummyAuthorizer()
         handler.authorizer = authorizer
+
+        basepaths = self.get_basepaths()
+        assert len(basepaths) > 0, 'Atleast one basepath expected'
+
+        handler.abstracted_fs = prepare_filesystem_class(basepaths)
+        authorizer.add_anonymous(basepaths[0])
         address = (self.config['ftp.host'], self.config['ftp.port'])
         self.ftp_server = FTPServer(address, handler)
 
@@ -52,3 +58,8 @@ class FTPApplication(object):
         logging.info('FTP server started at {}:{}'.format(
             address[0], address[1]))
         self.ftp_server.serve_forever()
+
+    def get_basepaths(self):
+        chroot = self.config.get('ftp.chroot') or ''
+        return [os.path.abspath(os.path.join(path, chroot))
+                for path in self.config['ftp.basepaths']]

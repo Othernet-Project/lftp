@@ -1,5 +1,5 @@
 """
-This module contains utils methods related to logging
+This module contains utility methods related to logging
 """
 
 from __future__ import unicode_literals
