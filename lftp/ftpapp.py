@@ -10,10 +10,10 @@ import logging
 from pyftpdlib.servers import FTPServer
 from pyftpdlib.handlers import FTPHandler
 from confloader import get_config_path, ConfDict
-from pyftpdlib.authorizers import DummyAuthorizer
 
 from .utils.logs import configure_logger
 from .ftp.filesystem import prepare_filesystem_class
+from .ftp.authorizer import FTPAuthorizer
 
 
 class FTPApplication(object):
@@ -42,7 +42,7 @@ class FTPApplication(object):
 
     def setup_ftp_server(self):
         handler = FTPHandler
-        authorizer = DummyAuthorizer()
+        authorizer = FTPAuthorizer()
         handler.authorizer = authorizer
 
         basepaths = self.get_basepaths()

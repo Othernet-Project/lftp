@@ -38,6 +38,8 @@ class UnifiedFilesystem(AbstractedFS):
     This class overrides relevant filesystem related operations of
     :py:class:`AbstractedFS` to provide the unified view.
     """
+    VIRTUAL_ROOT = '.'
+
     basepaths = []
 
     def virtualize_path(func):
@@ -119,7 +121,6 @@ class UnifiedFilesystem(AbstractedFS):
                 return
         raise OSError(u'No such file or directory: {}'.format(path))
 
-    @virtualize_path
     def listdir(self, path):
         """
         Returns a list of files present at ``path``. The virtual path is
@@ -129,14 +130,16 @@ class UnifiedFilesystem(AbstractedFS):
         The listing is not ordered in any particular order and does not contain
         '.' or '..'
         """
+        virtual_path = self.get_virtual_path(path)
         listing = []
         exists = False
         for basepath in self.basepaths:
-            full_path = normpaths(basepath, path)
+            full_path = normpaths(basepath, virtual_path)
             if os.path.exists(full_path):
                 exists = True
                 listing.extend(os.listdir(full_path))
-        if not exists:
+        # The :py:attr:`basepaths` directories should not raise an exception
+        if virtual_path != self.VIRTUAL_ROOT and not exists:
             raise OSError(u'No such file or directory: {}'.format(path))
         # Ensure unique listing entries by creating a set from listing and
         # converting it back to a list
@@ -188,9 +191,19 @@ class UnifiedFilesystem(AbstractedFS):
         """
         pass
 
+    def isdir(self, path):
+        """
+        Wrapper for :py:func:`os.path.isdir`, which resolves `path` by
+        extracting the virtual path and generating the actual path.
+        """
+        if path in self.basepaths:
+            return True
+        else:
+            return self._isdir(path)
+
     @virtualize_path
     @stdlib_wrapper(os.path.isdir)
-    def isdir(self, path):
+    def _isdir(self, path):
         """
         Wrapper for :py:func:`os.path.isdir`, which resolves `path` by
         extracting the virtual path and generating the actual path.
@@ -242,5 +255,5 @@ class UnifiedFilesystem(AbstractedFS):
             if os.path.commonprefix([path, basepath]) == basepath:
                 # Get the rest of the path, discarding till basepath and `/`
                 rest_path = path[len(basepath) + 1:]
-                return rest_path or '.'
+                return rest_path or self.VIRTUAL_ROOT
         return None
