@@ -4,6 +4,9 @@ This module contains the methods to bootstrap the FTP server
 
 from __future__ import unicode_literals
 
+from gevent import monkey
+monkey.patch_all(thread=False, select=False)
+
 import os
 
 from .ftpapp import FTPApplication
