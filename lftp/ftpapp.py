@@ -1,5 +1,5 @@
 """
-This module contains FTPApplication which manages the FTP server
+This module contains FTPApplication which manages the FTP and control server.
 """
 
 from __future__ import unicode_literals
@@ -85,9 +85,11 @@ class FTPApplication(object):
         self.control_server = ControlServer(self.config, self.command_handler)
 
     def start_ftp_server(self):
-        self.ftp_server_thread = _FTPThread(self.setup_ftp_server,
-                                            self._run_ftp,
-                                            self.teardown_ftp_server)
+        # Start the ftp server on a separate thread so that it does not block
+        # the control server
+        self.ftp_server_thread = _StoppableThread(self._run_ftp,
+                                                  setup=self.setup_ftp_server,
+                                                  teardown=self.teardown_ftp_server)
         self.ftp_server_thread.start()
 
     def stop_ftp_server(self):
@@ -107,6 +109,7 @@ class FTPApplication(object):
             self.stop()
 
     def _run_ftp(self):
+        # Run the FTP io loop for `timeout` seconds
         self.ftp_server.serve_forever(blocking=False, timeout=1)
 
     def stop(self):
@@ -138,20 +141,29 @@ class FTPApplication(object):
                 for path in self.config['ftp.basepaths']]
 
 
-class _FTPThread(threading.Thread):
-    def __init__(self, setup, run_loop, teardown):
-        super(_FTPThread, self).__init__()
+class _StoppableThread(threading.Thread):
+    """
+    This class represents a stoppable thread which calls the provided callback
+    in a loop until stopped. It accepts callbacks which are called just before
+    and after the loop.
+    """
 
+    def __init__(self, run_handler, setup=None, teardown=None):
+        super(_StoppableThread, self).__init__()
+
+        self._run_handler = run_handler
         self._setup = setup
-        self._run_loop = run_loop
         self._teardown = teardown
+
         self._stop = threading.Event()
 
     def run(self):
-        self._setup()
+        if self._setup:
+            self._setup()
         while not self.stopped():
-            self._run_loop()
-        self._teardown()
+            self._run_handler()
+        if self._teardown:
+            self._teardown()
 
     def stop(self):
         self._stop.set()

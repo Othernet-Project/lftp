@@ -1,5 +1,6 @@
 """
-This module contains :py:class:`LFTPClient`
+This module contains :py:class:`LFTPClient` which provides a simple interface
+to interact with the LFTP server.
 """
 
 import json
@@ -16,12 +17,18 @@ class LFTPClient(object):
         self.socket_path = socket_path
 
     def enable_ftp(self):
+        """ Enable FTP server on LFTP """
         return self.run_command('enable_ftp')
 
     def disable_ftp(self):
+        """ Disable FTP server on LFTP """
         return self.run_command('disable_ftp')
 
     def run_command(self, command, params={}):
+        """
+        Send `command` and `params` as a json object to LFTP.
+        Raises :py:exc:`LFTPException` for unknown or failed commands.
+        """
         command_json = {}
         command_json['command'] = command
         command_json['params'] = params
@@ -46,7 +53,8 @@ class LFTPClient(object):
             sock = None
             raise LFTPException('Could not connect to LFTP')
 
-    def read_response(self, sock, buff_size=2028):
+    @staticmethod
+    def read_response(sock, buff_size=2028):
         data = buff = sock.recv(buff_size)
         while buff and '\0' not in buff:
             buff = sock.recv(buff_size)

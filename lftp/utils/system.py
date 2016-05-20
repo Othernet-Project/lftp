@@ -1,7 +1,3 @@
-"""
-This module contain utility methods for system calls
-"""
-
 import sys
 import gevent
 import signal

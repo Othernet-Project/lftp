@@ -1,6 +1,6 @@
 """
-This module contains :py:class:`Settings` which reads and writes settings to
-files
+This module contains :py:class:`Settings` which reads and writes runtime
+generated settings to a JSON file
 """
 
 from __future__ import unicode_literals
@@ -11,6 +11,10 @@ import logging
 
 
 class Settings(object):
+    """
+    This class provides a dict-like interface to load and save settings to a JSON file.
+    """
+
     def __init__(self, path):
         self.path = path
         self.load()

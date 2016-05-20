@@ -1,5 +1,6 @@
 """
-This module contains :py:class:`ControlServer`, which is used to control lftp
+This module contains :py:class:`ControlServer`, which provides an Unix domain
+based IPC API to enable/disable the FTP server.
 """
 
 from __future__ import unicode_literals

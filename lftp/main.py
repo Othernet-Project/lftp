@@ -1,5 +1,5 @@
 """
-This module contains the methods to bootstrap the FTP server
+This module contains the methods to bootstrap the FTP server application.
 """
 
 from __future__ import unicode_literals
