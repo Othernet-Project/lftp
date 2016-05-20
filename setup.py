@@ -17,7 +17,9 @@ setup(
     include_package_data=True,
     long_description=read('README.rst'),
     install_requires=[
-        'pyftpdlib'
+        'confloader',
+        'gevent',
+        'pyftpdlib',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
