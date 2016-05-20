@@ -14,15 +14,6 @@ from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 from ..utils.string import to_unicode
 
 
-def prepare_filesystem_class(basepaths):
-    """
-    Generate a new type based on :py:class:`UnifiedFilesystem` and the
-    specified `basepaths`
-    """
-    return type(b'FunctionalUnifiedFilesystem', (UnifiedFilesystem,),
-                {'basepaths': basepaths})
-
-
 def normpaths(*paths):
     """ Join `paths` and normalize the result """
     return os.path.normpath(os.path.join(*paths))

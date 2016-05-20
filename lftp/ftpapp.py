@@ -17,7 +17,7 @@ from .utils.system import on_interrupt
 from .utils.logs import configure_logger
 from .ftp.authorizer import FTPAuthorizer
 from .control.server import ControlServer
-from .ftp.filesystem import prepare_filesystem_class
+from .ftp.filesystem import UnifiedFilesystem
 
 
 class FTPApplication(object):
@@ -68,7 +68,8 @@ class FTPApplication(object):
         basepaths = self.get_basepaths()
         assert len(basepaths) > 0, 'Atleast one basepath expected'
 
-        handler.abstracted_fs = prepare_filesystem_class(basepaths)
+        handler.abstracted_fs = UnifiedFilesystem
+        handler.abstracted_fs.basepaths = basepaths
         authorizer.add_anonymous(basepaths[0])
         address = (self.config['ftp.host'], self.config['ftp.port'])
         self.ftp_server = FTPServer(address, handler)
