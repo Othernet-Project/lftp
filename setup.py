@@ -7,7 +7,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-VERSION = '0..1dev'
+VERSION = '1.0.dev1'
 
 setup(
     name='lftp',
@@ -17,7 +17,9 @@ setup(
     include_package_data=True,
     long_description=read('README.rst'),
     install_requires=[
-        'pyftpdlib'
+        'confloader',
+        'gevent',
+        'pyftpdlib',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

@@ -1,55 +1,72 @@
-==============
-librarian-ondd
-==============
+====
+LFTP
+====
 
-A dashboard plugin used to control the ONDD system service. It allows it's user
-to set the parameters required by the satellite tuner, show status information
-about signal strength and quality, and view the currently active file transfers.
+LFTP is a lean and configurable FTP server application which provides a unified 
+view of the content across multiple root directories.
 
-Installation
-------------
+It provides an alternate TCP based IPC calls to enable/disable the FTP server.
 
-The component has the following dependencies:
+------
+Config
+------
+LFTP is configured via a ini-style configuration file, containing `[section]` 
+header and `name = value` entries. `confloader` is used to parse the config 
+file.
 
-- librarian-core_
-- librarian-dashboard_
-- librarian-setup_
-- ondd-ipc_
+The config for LFTP has two main sections:
+ - app section
+ - ftp section
 
-To enable this component, add it to the list of components in librarian_'s
-`config.ini` file, e.g.::
+A sample config can be found at `lftp/config.ini`
+
+app section
+^^^^^^^^^^^
+This section contains app-level configurations, specifying the Unix domain 
+socket for IPC calls and the path for settings file. Eg.::
 
     [app]
-    +components =
-        librarian_ondd
+    # Socket for IPC calls
+    socket = /var/run/lftp.ctrl
 
-Configuration
+    # Path for the settings file, which is used to store runtime generated settings
+    settings = /opt/lftp/settings.json
+
+
+ftp section
+^^^^^^^^^^^
+This section contains the FTP server component configuration. It specifies 
+FTP connection settings and the content directory paths. Eg.::
+
+    [ftp]
+    host = 127.0.0.1
+    port = 21
+
+    # Content paths for which the FTP will provide a unified view.
+    basepaths = 
+        /var/data/content_dir1
+        /opt/lftp/content_dir2
+
+     chroot = guest/data/
+
+The above config will start an FTP server at `127.0.0.1:21` which serves the 
+content present at `/var/data/content_dir1/guest/data/` and `/opt/lftp/content_dir2/guest/data/`
+
 -------------
+Settings JSON
+-------------
+LFTP maintains its runtime generated config at the path specified by the config 
+key `app.settings` as a JSON file. This file is used to store application data
+based on changes in its runtime status, like the current status of FTP 
+server component, in a flat structure. The file is not meant to be modified by 
+external applications.
 
-``ondd.socket``
-    Path to the socket for establishing a connection with the ONDD API.
-    Example::
+Currently, the following data are tracked by the settings file:
+  - `ftp_enabled`
+      Boolean which represents if the FTP server component is enabled. Defaults to `true`
 
-        [ondd]
-        socket = /var/run/ondd.ctrl
+A typical settings file: ::
 
-Development
------------
-
-In order to recompile static assets, make sure that compass_ and coffeescript_
-are installed on your system. To perform a one-time recompilation, execute::
-
-    make recompile
-
-To enable the filesystem watcher and perform automatic recompilation on changes,
-use::
-
-    make watch
-
-.. _librarian: https://github.com/Outernet-Project/librarian
-.. _librarian-core: https://github.com/Outernet-Project/librarian-core
-.. _librarian-dashboard: https://github.com/Outernet-Project/librarian-dashboard
-.. _librarian-setup: https://github.com/Outernet-Project/librarian-setup
-.. _ondd-ipc: https://github.com/Outernet-Project/ondd-ipc
-.. _compass: http://compass-style.org/
-.. _coffeescript: http://coffeescript.org/
+    {
+        "ftp_enabled": true
+    }
