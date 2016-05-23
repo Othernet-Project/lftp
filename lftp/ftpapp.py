@@ -116,14 +116,17 @@ class FTPApplication(object):
         self.stop_ftp_server()
         self.control_server.stop()
 
-    def command_handler(self, command):
-        if command['command'] == 'enable_ftp':
+    def command_handler(self, command_data):
+        command = command_data['command']
+        if command == 'enable_ftp':
             return self.handle_ftp_enable(True)
-        elif command['command'] == 'disable_ftp':
+        elif command == 'disable_ftp':
             return self.handle_ftp_enable(False)
+        elif command == 'status_ftp':
+            return self.handle_ftp_status()
         return {
             'success': False,
-            'msg': 'Unknown command: {}'.format(command['command'])
+            'msg': 'Unknown command: {}'.format(command)
         }
 
     def handle_ftp_enable(self, enabled):
@@ -134,6 +137,12 @@ class FTPApplication(object):
         elif not enabled and self.ftp_server:
             self.stop_ftp_server()
         return {'success': True}
+
+    def handle_ftp_status(self):
+        return {
+            'success': True,
+            'status': self.ftp_enabled and self.ftp_server,
+        }
 
     def get_basepaths(self):
         chroot = self.config.get('ftp.chroot') or ''

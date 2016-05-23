@@ -24,6 +24,10 @@ class LFTPClient(object):
         """ Disable FTP server on LFTP """
         return self.run_command('disable_ftp')
 
+    def status_ftp(self):
+        """ Returns `True` if FTP server is enabled and running. """
+        return self.run_command('status_ftp')
+
     def run_command(self, command, params={}):
         """
         Send `command` and `params` as a json object to LFTP.
@@ -35,7 +39,7 @@ class LFTPClient(object):
         response_json = self.send_command(command_json)
         success = response_json['success']
         if success:
-            return success
+            return response_json
         else:
             raise LFTPException(response_json['msg'])
 
