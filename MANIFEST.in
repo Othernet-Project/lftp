@@ -1,0 +1,3 @@
+include COPYING README.rst
+recursive-include lftp *
+recursive-exclude tests *
