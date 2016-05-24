@@ -12,6 +12,7 @@ Installation
 The component has the following dependencies:
 
 - librarian-dashboard_
+- `pyftpdlib <https://github.com/giampaolo/pyftpdlib>`_
 
 To enable this component, add it to the list of components in librarian_'s
 `config.ini` file, e.g.::
