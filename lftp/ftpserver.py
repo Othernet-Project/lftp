@@ -51,7 +51,7 @@ class LFTPServer(object):
         handler.abstracted_fs = UnifiedFilesystem
         handler.abstracted_fs.basepaths = basepaths
         authorizer.add_anonymous(basepaths[0])
-        address = (self.config['ftp.host'], self.config['ftp.port'])
+        address = ('', self.config['ftp.port'])
         self.ftp_server = FTPServer(address, handler)
 
     def teardown_ftp(self):
@@ -66,9 +66,8 @@ class LFTPServer(object):
                                                   setup=self.setup_ftp,
                                                   teardown=self.teardown_ftp)
         self.ftp_server_thread.start()
-        address = (self.config['ftp.host'], self.config['ftp.port'])
-        logging.info('FTP server started at {}:{}'.format(
-            address[0], address[1]))
+        logging.info('FTP server started on port {}'.format(
+            self.config['ftp.port']))
 
     def stop_ftp(self):
         if not self.ftp_server or not self.ftp_server_thread:
