@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 import os
 import re
+import errno
 
 from functools import wraps
 
@@ -18,6 +19,11 @@ from ..utils.string import to_unicode
 def normpaths(*paths):
     """ Join `paths` and normalize the result """
     return os.path.normpath(os.path.join(*paths))
+
+
+
+def raise_path_error(path):
+    raise OSError(errno.ENOENT, 'No such file or directory {}'.format(path), path)
 
 
 class UnifiedFilesystem(AbstractedFS):
@@ -71,7 +77,7 @@ class UnifiedFilesystem(AbstractedFS):
                     full_path = normpaths(basepath, path)
                     if os.path.exists(full_path):
                         return stdlib_func(full_path)
-                raise OSError('No such file or directory {}'.format(path))
+                raise_path_error(path)
             return wrapper
         return decorator
 
@@ -107,7 +113,7 @@ class UnifiedFilesystem(AbstractedFS):
             fullpath = normpaths(basepath, path)
             if os.path.isfile(fullpath):
                 return open(fullpath, mode)
-        raise OSError(u'No such file or directory: {}'.format(path))
+        raise_path_error(path)
 
     @virtualize_path
     def chdir(self, path):
@@ -120,7 +126,7 @@ class UnifiedFilesystem(AbstractedFS):
             if os.path.isdir(fullpath) and not self.is_blacklisted(path):
                 super(UnifiedFilesystem, self).chdir(fullpath)
                 return
-        raise OSError(u'No such file or directory: {}'.format(path))
+        raise_path_error(path)
 
     def listdir(self, path):
         """
@@ -144,7 +150,7 @@ class UnifiedFilesystem(AbstractedFS):
                 listing.extend(entries)
         # The :py:attr:`basepaths` directories should not raise an exception
         if virtual_path != self.VIRTUAL_ROOT and not exists:
-            raise OSError(u'No such file or directory: {}'.format(path))
+            raise_path_error(path)
         # Ensure unique listing entries by creating a set from listing and
         # converting it back to a list
         listing = list(set(listing))
