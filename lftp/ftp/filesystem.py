@@ -6,6 +6,8 @@ unified view of the content stored across multiple filesystems.
 from __future__ import unicode_literals
 
 import os
+import re
+import errno
 
 from functools import wraps
 
@@ -17,6 +19,11 @@ from ..utils.string import to_unicode
 def normpaths(*paths):
     """ Join `paths` and normalize the result """
     return os.path.normpath(os.path.join(*paths))
+
+
+
+def raise_path_error(path):
+    raise OSError(errno.ENOENT, 'No such file or directory {}'.format(path), path)
 
 
 class UnifiedFilesystem(AbstractedFS):
@@ -32,6 +39,15 @@ class UnifiedFilesystem(AbstractedFS):
     VIRTUAL_ROOT = '.'
 
     basepaths = []
+
+    blacklist = None
+
+    def __init__(self, *args, **kwargs):
+        super(UnifiedFilesystem, self).__init__(*args, **kwargs)
+
+        if self.blacklist:
+            self._blacklist_rx = [
+                re.compile(patt, re.IGNORECASE) for patt in self.blacklist]
 
     def virtualize_path(func):
         """
@@ -61,7 +77,7 @@ class UnifiedFilesystem(AbstractedFS):
                     full_path = normpaths(basepath, path)
                     if os.path.exists(full_path):
                         return stdlib_func(full_path)
-                raise OSError('No such file or directory {}'.format(path))
+                raise_path_error(path)
             return wrapper
         return decorator
 
@@ -97,7 +113,7 @@ class UnifiedFilesystem(AbstractedFS):
             fullpath = normpaths(basepath, path)
             if os.path.isfile(fullpath):
                 return open(fullpath, mode)
-        raise OSError(u'No such file or directory: {}'.format(path))
+        raise_path_error(path)
 
     @virtualize_path
     def chdir(self, path):
@@ -107,10 +123,10 @@ class UnifiedFilesystem(AbstractedFS):
         """
         for basepath in self.basepaths:
             fullpath = normpaths(basepath, path)
-            if os.path.isdir(fullpath):
+            if os.path.isdir(fullpath) and not self.is_blacklisted(path):
                 super(UnifiedFilesystem, self).chdir(fullpath)
                 return
-        raise OSError(u'No such file or directory: {}'.format(path))
+        raise_path_error(path)
 
     def listdir(self, path):
         """
@@ -128,10 +144,13 @@ class UnifiedFilesystem(AbstractedFS):
             full_path = normpaths(basepath, virtual_path)
             if os.path.exists(full_path):
                 exists = True
-                listing.extend(os.listdir(full_path))
+                # Filter out blacklisted entries from directory listing
+                entries = [p for p in os.listdir(full_path)
+                           if not self.is_blacklisted(os.path.join(virtual_path, p))]
+                listing.extend(entries)
         # The :py:attr:`basepaths` directories should not raise an exception
         if virtual_path != self.VIRTUAL_ROOT and not exists:
-            raise OSError(u'No such file or directory: {}'.format(path))
+            raise_path_error(path)
         # Ensure unique listing entries by creating a set from listing and
         # converting it back to a list
         listing = list(set(listing))
@@ -248,3 +267,15 @@ class UnifiedFilesystem(AbstractedFS):
                 rest_path = path[len(basepath) + 1:]
                 return rest_path or self.VIRTUAL_ROOT
         return None
+
+    def is_blacklisted(self, virtual_path):
+        """ Returns `True` if `virtual_path` matches the blacklisted paths """
+
+        if not self.blacklist:
+            return False
+        # Strip out any leading path component characters
+        if virtual_path.startswith(self.VIRTUAL_ROOT):
+            virtual_path = virtual_path[1:]
+        virtual_path = virtual_path.lstrip('/')
+
+        return any((p.search(virtual_path) for p in self._blacklist_rx))
