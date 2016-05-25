@@ -65,7 +65,7 @@ class UnifiedFilesystem(AbstractedFS):
             return func(self, virtual_path, *args, **kwargs)
         return wrapper
 
-    def stdlib_wrapper(stdlib_func):
+    def stdlib_wrapper(stdlib_func, exception=True):
         """
         This decorator provides a handy way to call stdlib functions which
         accept one path argument.
@@ -77,7 +77,8 @@ class UnifiedFilesystem(AbstractedFS):
                     full_path = normpaths(basepath, path)
                     if os.path.exists(full_path):
                         return stdlib_func(full_path)
-                raise_path_error(path)
+                if exception:
+                    raise_path_error(path)
             return wrapper
         return decorator
 
@@ -184,7 +185,7 @@ class UnifiedFilesystem(AbstractedFS):
         pass
 
     @virtualize_path
-    @stdlib_wrapper(os.path.isfile)
+    @stdlib_wrapper(os.path.isfile, exception=False)
     def isfile(self, path):
         """
         Wrapper for :py:func:`os.path.isfile`, which resolves `path` by
@@ -193,7 +194,7 @@ class UnifiedFilesystem(AbstractedFS):
         pass
 
     @virtualize_path
-    @stdlib_wrapper(os.path.islink)
+    @stdlib_wrapper(os.path.islink, exception=False)
     def islink(self, path):
         """
         Wrapper for :py:func:`os.path.islink`, which resolves `path` by
@@ -212,7 +213,7 @@ class UnifiedFilesystem(AbstractedFS):
             return self._isdir(path)
 
     @virtualize_path
-    @stdlib_wrapper(os.path.isdir)
+    @stdlib_wrapper(os.path.isdir, exception=False)
     def _isdir(self, path):
         """
         Wrapper for :py:func:`os.path.isdir`, which resolves `path` by
