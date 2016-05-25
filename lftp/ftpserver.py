@@ -50,6 +50,7 @@ class LFTPServer(object):
 
         handler.abstracted_fs = UnifiedFilesystem
         handler.abstracted_fs.basepaths = basepaths
+        handler.abstracted_fs.blacklist = self.config.get('ftp.blacklist')
         authorizer.add_anonymous(basepaths[0])
         address = ('', self.config['ftp.port'])
         self.ftp_server = FTPServer(address, handler)
