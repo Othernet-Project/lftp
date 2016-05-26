@@ -69,7 +69,7 @@ class UnifiedFilesystem(AbstractedFS):
         """
         This decorator provides a handy way to call stdlib function `stdlib_func`
         which accepts one path argument. If `exception` is set to `True`, an
-        :py:class:`OSError` will be raised if the path does not exist.
+        :py:exc:`OSError` will be raised if the path does not exist.
         """
         def decorator(func):
             @wraps(func)
