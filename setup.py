@@ -7,7 +7,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-VERSION = '0.0.1'
+VERSION = '1.0'
 
 setup(
     name='lftp',
@@ -17,7 +17,11 @@ setup(
     include_package_data=True,
     long_description=read('README.rst'),
     install_requires=[
-        'pyftpdlib'
+        'librarian_dashboard',
+        'pyftpdlib',
+    ],
+    dependency_links=[
+        'git+ssh://git@github.com/Outernet-Project/librarian-dashboard.git#egg=librarian_dashboard-0.1',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

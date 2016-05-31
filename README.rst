@@ -1,55 +1,54 @@
-==============
-librarian-ondd
-==============
+====
+LFTP
+====
 
-A dashboard plugin used to control the ONDD system service. It allows it's user
-to set the parameters required by the satellite tuner, show status information
-about signal strength and quality, and view the currently active file transfers.
+LFTP is a librarian component which acts as a FTP server, providing a unified 
+view of the content across multiple root directories.
 
+------------
 Installation
 ------------
 
 The component has the following dependencies:
 
-- librarian-core_
 - librarian-dashboard_
-- librarian-setup_
-- ondd-ipc_
+- `pyftpdlib <https://github.com/giampaolo/pyftpdlib>`_
 
 To enable this component, add it to the list of components in librarian_'s
 `config.ini` file, e.g.::
 
     [app]
     +components =
-        librarian_ondd
+        lftp
 
+
+-------------
 Configuration
 -------------
 
-``ondd.socket``
-    Path to the socket for establishing a connection with the ONDD API.
-    Example::
+``ftp.port``
+    Port on which the FTP server listens
 
-        [ondd]
-        socket = /var/run/ondd.ctrl
+``ftp.basepaths``
+    Content paths for which the FTP server will provide a unified view.
 
-Development
------------
+``ftp.chroot``
+    Optional directory present across all `basepaths` to which content listing 
+    and other FTP operations are limited to. Users cannot explore outside of this 
+    diretory.
 
-In order to recompile static assets, make sure that compass_ and coffeescript_
-are installed on your system. To perform a one-time recompilation, execute::
+    The path specified should be relative to `basepaths` and contained within them
 
-    make recompile
+Example::
 
-To enable the filesystem watcher and perform automatic recompilation on changes,
-use::
+    [ftp]
+    port = 21
 
-    make watch
+    basepaths = 
+        /var/data/content_dir1
+        /opt/lftp/content_dir2
 
-.. _librarian: https://github.com/Outernet-Project/librarian
-.. _librarian-core: https://github.com/Outernet-Project/librarian-core
-.. _librarian-dashboard: https://github.com/Outernet-Project/librarian-dashboard
-.. _librarian-setup: https://github.com/Outernet-Project/librarian-setup
-.. _ondd-ipc: https://github.com/Outernet-Project/ondd-ipc
-.. _compass: http://compass-style.org/
-.. _coffeescript: http://coffeescript.org/
+     chroot = guest/data/
+
+The above config will start an FTP server on port 21, which serves the 
+content present at `/var/data/content_dir1/guest/data/` and `/opt/lftp/content_dir2/guest/data/`
