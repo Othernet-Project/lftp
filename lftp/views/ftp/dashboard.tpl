@@ -1,7 +1,7 @@
 <%namespace name="forms" file="/ui/forms.tpl"/>
 <%namespace name="ftp_settings_form" file="_ftp_settings_form.tpl"/>
 
-${h.form('post', action=i18n_url('ftp_settings:save'), id="ftp-settings-form")}
+${h.form('post', action=i18n_url('ftp:settings'), id="ftp-settings-form")}
     ${ftp_settings_form.body()}
 </form>
 <script type="text/template" id="ftpSettingsSaveError">
