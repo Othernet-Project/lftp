@@ -14,6 +14,3 @@ ${h.form('post', action=i18n_url('ftp:settings'), id="ftp-settings-form")}
 <script type="text/template" id="ftpSettingsSaveOK">
     <p class="o-form-message">${_('Settings were saved.')}</p>
 </script>
-<%block name="extra_scripts">
-    <script src="${assets['js/dashboard']}"></script>
-</%block>
