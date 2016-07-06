@@ -1,10 +1,12 @@
 ((window, $, templates) ->
 
   section = $ '#dashboard-ftp'
+  successMessageId = '#ftpSettingsSaveOK'
+  errorMessageId = '#ftpSettingsSaveError'
+  successMessage = null
+  errorMessage = null
   form = null
   url = null
-  successMessage = templates.ftpSettingsSaveOK
-  errorMessage = templates.ftpSettingsSaveError
 
 
   removeMessage = () ->
@@ -16,13 +18,18 @@
     res = $.post url, data
     res.done (data) ->
       form.append successMessage
-      (form.parents '.o-collapsible-section').trigger 'remax'
+      section.trigger 'remax'
       setTimeout removeMessage, 3000
     res.fail () ->
       form.append errorMessage
+      section.trigger 'remax'
 
 
   initPlugin = () ->
+    $(successMessageId).loadTemplate()
+    $(errorMessageId).loadTemplate()
+    successMessage = templates.ftpSettingsSaveOK
+    errorMessage = templates.ftpSettingsSaveError
     form = section.find '#ftp-settings-form'
     url = form.attr 'action'
     form.on 'submit', (e) ->
