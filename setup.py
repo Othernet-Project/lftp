@@ -19,6 +19,7 @@ setup(
     install_requires=[
         'librarian',
         'pyftpdlib',
+        'pysendfile',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
