@@ -14,3 +14,4 @@ class FTPSettings(RouteBase):
         enabled_param = self.request.params.get('ftp_enabled', '')
         enabled = enabled_param == 'ftp_enabled'
         exts.ftp_server.ftp_enable(enabled)
+        return 'OK'
