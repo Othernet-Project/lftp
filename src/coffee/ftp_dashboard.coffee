@@ -1,7 +1,8 @@
 ((window, $, templates) ->
 
-  form = $ '#ftp-settings-form'
-  url = form.attr 'action'
+  section = $ '#dashboard-ftp'
+  form = null
+  url = null
   successMessage = templates.ftpSettingsSaveOK
   errorMessage = templates.ftpSettingsSaveError
 
@@ -21,9 +22,15 @@
       form.append errorMessage
 
 
-  form.on 'submit', (e) ->
-    e.preventDefault()
-    data = form.serialize()
-    submitData data
+  initPlugin = () ->
+    form = section.find '#ftp-settings-form'
+    url = form.attr 'action'
+    form.on 'submit', (e) ->
+      e.preventDefault()
+      data = form.serialize()
+      submitData data
+
+
+  section.on 'dashboard-plugin-loaded', initPlugin
 
 ) this, this.jQuery, this.templates
