@@ -1,9 +1,12 @@
 ((window, $, templates) ->
 
-  form = $ '#ftp-settings-form'
-  url = form.attr 'action'
-  successMessage = templates.ftpSettingsSaveOK
-  errorMessage = templates.ftpSettingsSaveError
+  section = $ '#dashboard-ftp'
+  successMessageId = '#ftpSettingsSaveOK'
+  errorMessageId = '#ftpSettingsSaveError'
+  successMessage = null
+  errorMessage = null
+  form = null
+  url = null
 
 
   removeMessage = () ->
@@ -15,15 +18,26 @@
     res = $.post url, data
     res.done (data) ->
       form.append successMessage
-      (form.parents '.o-collapsible-section').trigger 'remax'
+      section.trigger 'remax'
       setTimeout removeMessage, 3000
     res.fail () ->
       form.append errorMessage
+      section.trigger 'remax'
 
 
-  form.on 'submit', (e) ->
-    e.preventDefault()
-    data = form.serialize()
-    submitData data
+  initPlugin = () ->
+    $(successMessageId).loadTemplate()
+    $(errorMessageId).loadTemplate()
+    successMessage = templates.ftpSettingsSaveOK
+    errorMessage = templates.ftpSettingsSaveError
+    form = section.find '#ftp-settings-form'
+    url = form.attr 'action'
+    form.on 'submit', (e) ->
+      e.preventDefault()
+      data = form.serialize()
+      submitData data
+
+
+  section.on 'dashboard-plugin-loaded', initPlugin
 
 ) this, this.jQuery, this.templates

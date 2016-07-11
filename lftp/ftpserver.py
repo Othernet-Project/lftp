@@ -8,7 +8,7 @@ import os
 import logging
 import threading
 
-from pyftpdlib.servers import FTPServer
+from pyftpdlib.servers import MultiprocessFTPServer
 from pyftpdlib.handlers import FTPHandler
 
 from .ftp.authorizer import FTPAuthorizer
@@ -51,9 +51,10 @@ class LFTPServer(object):
         handler.abstracted_fs = UnifiedFilesystem
         handler.abstracted_fs.basepaths = basepaths
         handler.abstracted_fs.blacklist = self.config.get('ftp.blacklist')
+        handler.use_sendfile = True
         authorizer.add_anonymous(basepaths[0])
         address = ('', self.config['ftp.port'])
-        self.ftp_server = FTPServer(address, handler)
+        self.ftp_server = MultiprocessFTPServer(address, handler)
 
     def teardown_ftp(self):
         self.ftp_server.close_all()

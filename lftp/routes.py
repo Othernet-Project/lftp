@@ -1,17 +1,17 @@
 """ This module contains the routes and their handlers for LFTP """
 
-from bottle import request
+from streamline import RouteBase
+
+from librarian.core.exts import ext_container as exts
 
 
-def set_settings():
-    ftp_enabled_param = request.params.get('ftp_enabled', '')
-    enabled = ftp_enabled_param == 'ftp_enabled'
-    request.app.supervisor.exts.ftp_server.ftp_enable(enabled)
+class FTPSettings(RouteBase):
+    name = 'ftp:settings'
+    path = '/ftp/settings/'
+    kwargs = dict(unlocked=True)
 
-
-def routes(config):
-    skip_plugins = config['app.skip_plugins']
-    return (
-        ('ftp_settings:save', set_settings,
-         'POST', '/ftp/settings/', dict(unlocked=True, skip=skip_plugins)),
-    )
+    def post(self):
+        enabled_param = self.request.params.get('ftp_enabled', '')
+        enabled = enabled_param == 'ftp_enabled'
+        exts.ftp_server.ftp_enable(enabled)
+        return 'OK'
