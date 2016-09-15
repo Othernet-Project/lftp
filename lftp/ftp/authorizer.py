@@ -6,7 +6,9 @@ from __future__ import unicode_literals
 
 import os
 
-from pyftpdlib.authorizers import DummyAuthorizer
+import pbkdf2
+
+from pyftpdlib.authorizers import DummyAuthorizer, AuthenticationFailed
 
 
 class FTPAuthorizer(DummyAuthorizer):
@@ -63,3 +65,19 @@ class FTPAuthorizer(DummyAuthorizer):
         RuntimeWarning.
         """
         self.add_user('anonymous', '', homedir, **kwargs)
+
+    def validate_authentication(self, username, password, handler):
+        """
+        Raises AuthenticationFailed if supplied username and
+        password don't match the stored credentials, else return
+        None.
+        """
+        msg = "Authentication failed."
+        if not self.has_user(username):
+            if username == 'anonymous':
+                msg = "Anonymous access not allowed."
+            raise AuthenticationFailed(msg)
+        if username != 'anonymous':
+            encrypted = self.user_table[username]['pwd']
+            if encrypted != pbkdf2.crypt(password, encrypted):
+                raise AuthenticationFailed(msg)
