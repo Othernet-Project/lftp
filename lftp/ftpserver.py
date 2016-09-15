@@ -16,9 +16,10 @@ from .ftp.filesystem import UnifiedFilesystem
 
 
 class LFTPServer(object):
-    def __init__(self, config, setup):
+    def __init__(self, config, setup, setup_hooks=None):
         self.config = config
         self.setup = setup
+        self.setup_hooks = setup_hooks or []
 
         self.ftp_server = None
         self.ftp_server_thread = None
@@ -42,8 +43,7 @@ class LFTPServer(object):
         if self.ftp_server:
             return
         handler = FTPHandler
-        authorizer = FTPAuthorizer()
-        handler.authorizer = authorizer
+        handler.authorizer = FTPAuthorizer()
 
         basepaths = self.get_basepaths()
         assert len(basepaths) > 0, 'Atleast one basepath expected'
@@ -52,7 +52,11 @@ class LFTPServer(object):
         handler.abstracted_fs.basepaths = basepaths
         handler.abstracted_fs.blacklist = self.config.get('ftp.blacklist')
         handler.use_sendfile = True
-        authorizer.add_anonymous(basepaths[0])
+        handler.authorizer.add_anonymous(basepaths[0])
+        # execute setup hooks with the handler instance
+        for hook in self.setup_hooks:
+            hook(handler)
+
         address = ('', self.config['ftp.port'])
         self.ftp_server = MultiprocessFTPServer(address, handler)
 
