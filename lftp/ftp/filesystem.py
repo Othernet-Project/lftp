@@ -21,7 +21,6 @@ def normpaths(*paths):
     return os.path.normpath(os.path.join(*paths))
 
 
-
 def raise_path_error(path):
     raise OSError(errno.ENOENT, 'No such file or directory {}'.format(path), path)
 
@@ -57,11 +56,7 @@ class UnifiedFilesystem(AbstractedFS):
         """
         @wraps(func)
         def wrapper(self, path, *args, **kwargs):
-            path = to_unicode(path)
-            if os.path.isabs(path):
-                virtual_path = self.get_virtual_path(path)
-            else:
-                virtual_path = path
+            virtual_path = self.get_virtual_path(path)
             return func(self, virtual_path, *args, **kwargs)
         return wrapper
 
@@ -115,7 +110,10 @@ class UnifiedFilesystem(AbstractedFS):
             fullpath = normpaths(basepath, path)
             if os.path.isfile(fullpath):
                 return open(fullpath, mode)
-        raise_path_error(path)
+        # in case of write operations where a new file should be created, just
+        # use the last basepath from the list
+        fullpath = normpaths(self.basepaths[-1], path)
+        return open(fullpath, mode)
 
     @virtualize_path
     def chdir(self, path):
@@ -240,17 +238,48 @@ class UnifiedFilesystem(AbstractedFS):
         """
         pass
 
+    @virtualize_path
     def mkdir(self, path):
-        raise FilesystemError('Unsupported operation')
+        """
+        Wrapper for `os.mkdir`. The generated path from the virtual path will
+        be based on the last basepath from the list as there is no way to
+        predict which one should be used.
+        """
+        fullpath = normpaths(self.basepaths[-1], path)
+        return os.mkdir(fullpath)
 
+    @virtualize_path
+    @stdlib_wrapper(os.rmdir)
     def rmdir(self, path):
-        raise FilesystemError('Unsupported operation')
+        """
+        Remove the specified directory by resolving the virtual path to one
+        of the base paths under which the directory is found.
+        """
+        pass
 
+    @virtualize_path
+    @stdlib_wrapper(os.remove)
     def remove(self, path):
-        raise FilesystemError('Unsupported operation')
+        """
+        Remove the specified file by resolving the virtual path to one
+        of the base paths under which the file is found.
+        """
+        pass
 
     def rename(self, src, dst):
-        raise FilesystemError('Unsupported operation')
+        """
+        Rename `src` to `dst` by finding first under which base path is `src`
+        and if found, use that base path for renaming for both `src` and `dst`.
+        """
+        virtual_src = self.get_virtual_path(src)
+        virtual_dst = self.get_virtual_path(dst)
+        for basepath in self.basepaths:
+            abs_src = normpaths(basepath, virtual_src)
+            if os.path.exists(abs_src) and not self.is_blacklisted(abs_src):
+                abs_dst = normpaths(basepath, virtual_dst)
+                os.rename(abs_src, abs_dst)
+                return
+        raise_path_error(src)
 
     def chmod(self, path, mode):
         raise FilesystemError('Unsupported operation')
@@ -263,6 +292,11 @@ class UnifiedFilesystem(AbstractedFS):
         Checks `path` against each :py:attr:`basepaths` and extracts the
         virtual path, i.e. the path relative to matched basepath, or None.
         """
+        path = to_unicode(path)
+        if not os.path.isabs(path):
+            # Return path as-is in case of non-absolute paths
+            return path
+        # Return path relative to one of the basepaths
         for basepath in self.basepaths:
             if os.path.commonprefix([path, basepath]) == basepath:
                 # Get the rest of the path, discarding till basepath and `/`
