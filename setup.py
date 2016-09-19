@@ -7,7 +7,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-VERSION = '1.3'
+VERSION = '1.4.dev1'
 
 setup(
     name='lftp',
