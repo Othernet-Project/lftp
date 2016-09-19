@@ -2,10 +2,31 @@
 This module contains lftp hooks for librarian component lifecycle.
 """
 
+import functools
+
 from .ftpserver import LFTPServer
 
 from librarian.core.contrib.auth.users import User
 from librarian.core.exports import hook
+from librarian.core.exts import ext_container as exts
+
+
+READ_WRITE = 'elradfmw'
+
+
+def user_created(handler, instance):
+    """
+    When a new superuser is created, add it to the list of authorized ftp
+    users with read-write access.
+    """
+    if not instance.is_superuser:
+        return
+    # accept only superusers
+    home = handler.abstracted_fs.basepaths[0]
+    handler.authorizer.add_user(instance.username,
+                                instance.password,
+                                home,
+                                perm=READ_WRITE)
 
 
 def install_users(handler):
@@ -15,12 +36,14 @@ def install_users(handler):
     ftp users.
     """
     superusers = User.from_group('superuser') or []
+    home = handler.abstracted_fs.basepaths[0]
     for user in superusers:
-        home = handler.abstracted_fs.basepaths[0]
         handler.authorizer.add_user(user.username,
                                     user.password,
                                     home,
-                                    perm='elradfmw')
+                                    perm=READ_WRITE)
+    exts.events.subscribe(User.USER_CREATED_EVENT,
+                          functools.partial(user_created, handler))
 
 
 @hook('post_start')
