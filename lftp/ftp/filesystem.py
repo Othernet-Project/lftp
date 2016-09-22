@@ -295,10 +295,10 @@ class UnifiedFilesystem(AbstractedFS):
             if os.path.exists(abs_src) and not self.is_blacklisted(abs_src):
                 abs_dst = normpaths(basepath, virtual_dst)
                 os.rename(abs_src, abs_dst)
+                for cb in self.on_modified:
+                    cb(virtual_src)
+                    cb(virtual_dst)
                 return
-        for cb in self.on_modified:
-            cb(os.path.dirname(virtual_src))
-            cb(os.path.dirname(virtual_dst))
         raise_path_error(src)
 
     def chmod(self, path, mode):
