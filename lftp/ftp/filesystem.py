@@ -38,15 +38,28 @@ class UnifiedFilesystem(AbstractedFS):
     VIRTUAL_ROOT = '.'
 
     basepaths = []
+    on_modified = []
 
     blacklist = None
 
     def __init__(self, *args, **kwargs):
         super(UnifiedFilesystem, self).__init__(*args, **kwargs)
-
         if self.blacklist:
             self._blacklist_rx = [
                 re.compile(patt, re.IGNORECASE) for patt in self.blacklist]
+
+    def modifier(func):
+        """
+        Execute registered callback function for notifying about modifications
+        performed over the affected paths.
+        """
+        @wraps(func)
+        def wrapper(self, path, *args, **kwargs):
+            result = func(self, path, *args, **kwargs)
+            for cb in self.on_modified:
+                cb(path)
+            return result
+        return wrapper
 
     def virtualize_path(func):
         """
@@ -101,6 +114,7 @@ class UnifiedFilesystem(AbstractedFS):
         return False
 
     @virtualize_path
+    @modifier
     def open(self, path, mode):
         """
         Wrapper for `open`, which resolves `path` by extracting the virtual
@@ -239,6 +253,7 @@ class UnifiedFilesystem(AbstractedFS):
         pass
 
     @virtualize_path
+    @modifier
     def mkdir(self, path):
         """
         Wrapper for `os.mkdir`. The generated path from the virtual path will
@@ -249,6 +264,7 @@ class UnifiedFilesystem(AbstractedFS):
         return os.mkdir(fullpath)
 
     @virtualize_path
+    @modifier
     @stdlib_wrapper(os.rmdir)
     def rmdir(self, path):
         """
@@ -258,6 +274,7 @@ class UnifiedFilesystem(AbstractedFS):
         pass
 
     @virtualize_path
+    @modifier
     @stdlib_wrapper(os.remove)
     def remove(self, path):
         """
@@ -279,6 +296,9 @@ class UnifiedFilesystem(AbstractedFS):
                 abs_dst = normpaths(basepath, virtual_dst)
                 os.rename(abs_src, abs_dst)
                 return
+        for cb in self.on_modified:
+            cb(os.path.dirname(virtual_src))
+            cb(os.path.dirname(virtual_dst))
         raise_path_error(src)
 
     def chmod(self, path, mode):

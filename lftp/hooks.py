@@ -46,11 +46,19 @@ def install_users(handler):
                           functools.partial(user_created, handler))
 
 
+def register_onmodify(handler):
+    """
+    Register a callback function to be invoked when a path is being modified
+    in some way (created, deleted, renamed, ...).
+    """
+    handler.abstracted_fs.on_modified.append(exts.fsal.refresh_path)
+
+
 @hook('post_start')
 def post_start(supervisor):
     ftp_server = LFTPServer(supervisor.config,
                             supervisor.exts.setup,
-                            setup_hooks=(install_users,))
+                            setup_hooks=(install_users, register_onmodify))
     ftp_server.start()
     supervisor.exts.ftp_server = ftp_server
 
